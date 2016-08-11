@@ -51,19 +51,29 @@ import de.linearbits.subframe.analyzer.ValueBuffer;
 public abstract class BenchmarkExperimentResidual {
 
     /** The benchmark instance */
-    private static final Benchmark  BENCHMARK             = new Benchmark(new String[] { "Dataset", "Model", "Threshold" });
-    /** TOTAL */
-    public static final int         TIME                  = BENCHMARK.addMeasure("time");
-    /** TOTAL */
-    public static final int         QUALITY               = BENCHMARK.addMeasure("quality");
-    /** TOTAL */
-    public static final int         SAMPLE_UNIQUENESS     = BENCHMARK.addMeasure("sample-uniqueness");
-    /** TOTAL */
-    public static final int         POPULATION_UNIQUENESS = BENCHMARK.addMeasure("population-uniqueness");
+    private static final Benchmark  BENCHMARK                     = new Benchmark(new String[] { "Dataset", "Model", "Threshold"});
     /** VALUE */
-    private static final double[][] SOLVER_START_VALUES   = getSolverStartValues();
+    public static final int         TIME                             = BENCHMARK.addMeasure("time");
     /** VALUE */
-    private static final double     POPULATION_USA        = 318.9 * Math.pow(10d, 6d);
+    public static final int         QUALITY                          = BENCHMARK.addMeasure("quality");
+    /** VALUE */
+    public static final int         SAMPLE_UNIQUENESS                = BENCHMARK.addMeasure("SU");
+    /** VALUE */
+    public static final int         POPULATION_UNIQUENESS_USA        = BENCHMARK.addMeasure("PU (USA)");
+    /** VALUE */
+    public static final int         POPULATION_UNIQUENESS_CALIFORNIA = BENCHMARK.addMeasure("PU (California)");
+    /** VALUE */
+    public static final int         POPULATION_UNIQUENESS_LA         = BENCHMARK.addMeasure("PU (Los Angeles)");
+    /** VALUE */
+    private static final double     POPULATION_USA                   = 318.9 * Math.pow(10d, 6d);
+    /** VALUE */
+    private static final double     POPULATION_CALIFORNIA            = 39.14 * Math.pow(10d, 6d);
+    /** VALUE */
+    private static final double     POPULATION_LA                    = 4.031 * Math.pow(10d, 6d);
+    /** CONFIG */
+    private static final ARXSolverConfiguration SOLVER_CONFIG                    = ARXSolverConfiguration.create()
+                                                                                                         .preparedStartValues(getSolverStartValues())
+                                                                                                         .iterationsPerTry(10);
 
     /**
      * Main
@@ -76,20 +86,20 @@ public abstract class BenchmarkExperimentResidual {
         BENCHMARK.addAnalyzer(TIME, new ValueBuffer());
         BENCHMARK.addAnalyzer(QUALITY, new ValueBuffer());
         BENCHMARK.addAnalyzer(SAMPLE_UNIQUENESS, new ValueBuffer());
-        BENCHMARK.addAnalyzer(POPULATION_UNIQUENESS, new ValueBuffer());
+        BENCHMARK.addAnalyzer(POPULATION_UNIQUENESS_USA, new ValueBuffer());
+        BENCHMARK.addAnalyzer(POPULATION_UNIQUENESS_CALIFORNIA, new ValueBuffer());
+        BENCHMARK.addAnalyzer(POPULATION_UNIQUENESS_LA, new ValueBuffer());
 
         // Perform
         String[] datasets = new String[] { "adult", "fars", "atus", "ihis", "cup"};
         for (int i = 0; i < datasets.length; i++) {
             for (BenchmarkUtilityMeasure measure : new BenchmarkUtilityMeasure[]{BenchmarkUtilityMeasure.LOSS}){
-                
                 System.out.println(datasets[i] +" - " + measure.toString());
                 for (double threshold : new double[]{0.01d, 0.05d}) {
-                
                     System.out.println(" - Threshold: " + threshold);
-                    BENCHMARK.addRun(datasets[i], measure.toString(), String.valueOf(threshold));
-                    analyze(datasets[i], measure, threshold);
-                    BENCHMARK.getResults().write(new File("results/residual-old-setup.csv"));
+                        BENCHMARK.addRun(datasets[i], measure.toString(), String.valueOf(threshold));
+                        analyze(datasets[i], measure, threshold);
+                        BENCHMARK.getResults().write(new File("results/residual.csv"));
                 }
             }
         }
@@ -100,6 +110,7 @@ public abstract class BenchmarkExperimentResidual {
      * @param dataset
      * @param measure
      * @param threshold
+     * @param population
      * @throws IOException
      */
     private static void analyze(String dataset, BenchmarkUtilityMeasure measure, double threshold) throws IOException {
@@ -124,8 +135,7 @@ public abstract class BenchmarkExperimentResidual {
         config.addCriterion(new PopulationUniqueness(threshold,
                                                      PopulationUniquenessModel.PITMAN,
                                                      ARXPopulationModel.create((long)POPULATION_USA), 
-                                                     ARXSolverConfiguration.create().preparedStartValues(SOLVER_START_VALUES)
-                                                     .iterationsPerTry(10)));
+                                                     SOLVER_CONFIG));
         
         ARXAnonymizer anonymizer = new ARXAnonymizer();
 
@@ -147,11 +157,19 @@ public abstract class BenchmarkExperimentResidual {
         }
         time = System.currentTimeMillis() - time;
         
-        RiskEstimateBuilder estimator = result.getOutput().getRiskEstimator(ARXPopulationModel.create((long)POPULATION_USA));
+        RiskEstimateBuilder estimator = result.getOutput().getRiskEstimator(ARXPopulationModel.create((long)POPULATION_USA), SOLVER_CONFIG);
+        double su = estimator.getSampleBasedUniquenessRisk().getFractionOfUniqueTuples();
+        double pu_usa = estimator.getPopulationBasedUniquenessRisk().getFractionOfUniqueTuplesPitman();
+        estimator = result.getOutput().getRiskEstimator(ARXPopulationModel.create((long)POPULATION_CALIFORNIA), SOLVER_CONFIG);
+        double pu_california = estimator.getPopulationBasedUniquenessRisk().getFractionOfUniqueTuplesPitman();
+        estimator = result.getOutput().getRiskEstimator(ARXPopulationModel.create((long)POPULATION_LA), SOLVER_CONFIG);
+        double pu_la = estimator.getPopulationBasedUniquenessRisk().getFractionOfUniqueTuplesPitman();
         BENCHMARK.addValue(TIME, time);
         BENCHMARK.addValue(QUALITY, utility);
-        BENCHMARK.addValue(SAMPLE_UNIQUENESS, estimator.getSampleBasedUniquenessRisk().getFractionOfUniqueTuples());
-        BENCHMARK.addValue(POPULATION_UNIQUENESS, estimator.getPopulationBasedUniquenessRisk().getFractionOfUniqueTuplesPitman());
+        BENCHMARK.addValue(SAMPLE_UNIQUENESS, su);
+        BENCHMARK.addValue(POPULATION_UNIQUENESS_USA, pu_usa);
+        BENCHMARK.addValue(POPULATION_UNIQUENESS_CALIFORNIA, pu_california);
+        BENCHMARK.addValue(POPULATION_UNIQUENESS_LA, pu_la);
         data.getHandle().release();
     }
 
