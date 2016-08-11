@@ -45,7 +45,7 @@ import de.linearbits.subframe.Benchmark;
 import de.linearbits.subframe.analyzer.ValueBuffer;
 
 /**
- * Test for data transformations.
+ * Experiment to evaluate scalability.
  *
  * @author Fabian Prasser
  * @author Florian Kohlmayer

@@ -191,6 +191,32 @@ public class BenchmarkSetup {
         }
     }
     
+    public static int getK(double uniqueness) {
+        if (uniqueness == 0.001d) {
+            return 3;
+        } else if (uniqueness == 0.002d) {
+            return 4;
+        } else if (uniqueness == 0.003d) {
+            return 5;
+        } else if (uniqueness == 0.004d) {
+            return 10;
+        } else if (uniqueness == 0.005d) {
+            return 15;
+        } else if (uniqueness == 0.006d) {
+            return 20;
+        } else if (uniqueness == 0.007d) {
+            return 25;
+        } else if (uniqueness == 0.008d) {
+            return 50;
+        } else if (uniqueness == 0.009d) {
+            return 75;
+        } else if (uniqueness == 0.01d) {
+            return 100;
+        } else {
+            throw new IllegalArgumentException("Unknown uniqueness parameter");
+        }
+    }
+    
     /**
      * Returns the quasi-identifiers for the dataset
      * @param dataset
@@ -250,7 +276,7 @@ public class BenchmarkSetup {
             throw new RuntimeException("Invalid dataset");
         }
     }
-    
+
     /**
      * Returns a set of utility measures
      * @return
@@ -258,32 +284,6 @@ public class BenchmarkSetup {
     public static BenchmarkUtilityMeasure[] getUtilityMeasures() {
         return new BenchmarkUtilityMeasure[]{BenchmarkUtilityMeasure.ENTROPY,
                                              BenchmarkUtilityMeasure.LOSS};
-    }
-
-    public static int getK(double uniqueness) {
-        if (uniqueness == 0.001d) {
-            return 3;
-        } else if (uniqueness == 0.002d) {
-            return 4;
-        } else if (uniqueness == 0.003d) {
-            return 5;
-        } else if (uniqueness == 0.004d) {
-            return 10;
-        } else if (uniqueness == 0.005d) {
-            return 15;
-        } else if (uniqueness == 0.006d) {
-            return 20;
-        } else if (uniqueness == 0.007d) {
-            return 25;
-        } else if (uniqueness == 0.008d) {
-            return 50;
-        } else if (uniqueness == 0.009d) {
-            return 75;
-        } else if (uniqueness == 0.01d) {
-            return 100;
-        } else {
-            throw new IllegalArgumentException("Unknown uniqueness parameter");
-        }
     }
 
 }

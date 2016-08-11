@@ -43,7 +43,7 @@ import de.linearbits.subframe.Benchmark;
 import de.linearbits.subframe.analyzer.ValueBuffer;
 
 /**
- * Test for data transformations.
+ * Experiment to evaluate the impact of optimizations.
  *
  * @author Fabian Prasser
  * @author Florian Kohlmayer

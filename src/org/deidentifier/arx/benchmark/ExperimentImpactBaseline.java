@@ -42,13 +42,12 @@ import de.linearbits.subframe.Benchmark;
 import de.linearbits.subframe.analyzer.ValueBuffer;
 
 /**
- * Test for data transformations.
+ * Experiment to evaluate the impact of optimizations.
  *
  * @author Fabian Prasser
  * @author Florian Kohlmayer
  */
 public abstract class ExperimentImpactBaseline {
-
 
     /** The benchmark instance */
     private static final Benchmark BENCHMARK   = new Benchmark(new String[] { "Dataset"});
